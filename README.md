@@ -42,7 +42,7 @@ tizenclaw-ocr <image_path> [--json]
 # Output: {"texts": [{"text": "...", "confidence": 0.95, "box": [x,y,w,h]}], "count": N}
 ```
 
-**Install path**: `/opt/usr/share/tizenclaw/models/ppocr/`, `/opt/usr/share/tizenclaw/tools/cli/tizenclaw-ocr/`
+**Install path**: `/opt/usr/share/tizenclaw/models/ppocr/`, `/opt/usr/share/tizen-tools/cli/tizenclaw-ocr/`
 
 ---
 

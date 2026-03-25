@@ -5,7 +5,7 @@ SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(APP_DATA_DIR "/opt/usr/share/tizenclaw" CACHE STRING "App data directory")
-SET(OCR_CLI_DIR "${APP_DATA_DIR}/tools/cli/tizenclaw-ocr")
+SET(OCR_CLI_DIR "/opt/usr/share/tizen-tools/cli/tizenclaw-ocr")
 
 ## Detect architecture
 IF(NOT DEFINED TIZENCLAW_ARCH)
