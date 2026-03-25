@@ -37,6 +37,7 @@ rm -rf %{buildroot}
 
 mkdir -p %{buildroot}/opt/usr/share/tizenclaw/rag
 mkdir -p %{buildroot}/opt/usr/share/tizenclaw/lib
+mkdir -p %{buildroot}/opt/usr/share/tizenclaw/include
 mkdir -p %{buildroot}/opt/usr/share/tizenclaw/models
 mkdir -p %{buildroot}/opt/usr/share/tizen-tools/cli/tizenclaw-ocr
 
@@ -45,5 +46,6 @@ mkdir -p %{buildroot}/opt/usr/share/tizen-tools/cli/tizenclaw-ocr
 %manifest %{name}.manifest
 /opt/usr/share/tizenclaw/rag/
 /opt/usr/share/tizenclaw/lib/
+/opt/usr/share/tizenclaw/include/
 /opt/usr/share/tizenclaw/models/
 /opt/usr/share/tizen-tools/cli/tizenclaw-ocr/

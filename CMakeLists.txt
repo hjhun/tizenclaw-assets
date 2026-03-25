@@ -22,15 +22,26 @@ SET(ORT_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/${TIZENCLAW_ARCH}")
 SET(ORT_RUNTIME_DIR "${APP_DATA_DIR}/lib")
 SET(ORT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-## ── OCR CLI binary ────────────────────────────
-ADD_EXECUTABLE(tizenclaw-ocr src/tizenclaw_ocr.cc)
+## ── OCR Library and CLI binary ────────────────────────────
+ADD_LIBRARY(tizenclaw-ocr SHARED src/tizenclaw_ocr_lib.cc)
 TARGET_INCLUDE_DIRECTORIES(tizenclaw-ocr PRIVATE ${ORT_INCLUDE_DIR})
 TARGET_LINK_DIRECTORIES(tizenclaw-ocr PRIVATE ${ORT_LIB_DIR})
 TARGET_LINK_LIBRARIES(tizenclaw-ocr onnxruntime)
 SET_TARGET_PROPERTIES(tizenclaw-ocr PROPERTIES
   INSTALL_RPATH "${ORT_RUNTIME_DIR}"
   BUILD_WITH_INSTALL_RPATH TRUE)
-INSTALL(TARGETS tizenclaw-ocr DESTINATION ${OCR_CLI_DIR})
+
+ADD_EXECUTABLE(tizenclaw-ocr-cli src/tizenclaw_ocr_cli.cc)
+TARGET_INCLUDE_DIRECTORIES(tizenclaw-ocr-cli PRIVATE ${ORT_INCLUDE_DIR})
+TARGET_LINK_DIRECTORIES(tizenclaw-ocr-cli PRIVATE ${ORT_LIB_DIR})
+TARGET_LINK_LIBRARIES(tizenclaw-ocr-cli tizenclaw-ocr)
+SET_TARGET_PROPERTIES(tizenclaw-ocr-cli PROPERTIES OUTPUT_NAME "tizenclaw-ocr"
+  INSTALL_RPATH "${ORT_RUNTIME_DIR}"
+  BUILD_WITH_INSTALL_RPATH TRUE)
+
+INSTALL(TARGETS tizenclaw-ocr DESTINATION "${APP_DATA_DIR}/lib")
+INSTALL(TARGETS tizenclaw-ocr-cli DESTINATION ${OCR_CLI_DIR})
+INSTALL(FILES include/tizenclaw_ocr_api.h DESTINATION "${APP_DATA_DIR}/include")
 INSTALL(FILES res/tool.md DESTINATION ${OCR_CLI_DIR})
 
 ## ── ONNX Runtime (arch-specific) ──────────────
