@@ -1,6 +1,7 @@
 // Copyright 2024-2026 Samsung Electronics Co., Ltd.
 // Licensed under the Apache License, Version 2.0.
 
+#define ORT_API_MANUAL_INIT
 #include "tizenclaw_ocr_api.h"
 #include <onnxruntime_cxx_api.h>
 #include <algorithm>
@@ -12,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <dlfcn.h>
 
 static std::string EscapeJson(const std::string& s) {
   std::string out;
@@ -210,19 +212,70 @@ struct OcrEngine {
   Ort::AllocatorWithDefaultOptions alloc;
 
   OcrEngine(const std::string& model_dir)
-      : env(ORT_LOGGING_LEVEL_WARNING, "tizenclaw-ocr"),
+      : env(nullptr),
+        opts(nullptr),
         det_session(nullptr), rec_session(nullptr),
-        mem_info(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)) {
+        mem_info(nullptr),
+        alloc(nullptr) {
+
+    void* ort_handle = dlopen("/opt/usr/share/tizenclaw/lib/libonnxruntime.so.1", RTLD_NOW | RTLD_LOCAL);
+    if (!ort_handle) {
+      std::cerr << "[OCR] FATAL: dlopen libonnxruntime failed: " << dlerror() << "\n";
+      throw std::runtime_error("dlopen onnxruntime.so failed");
+    }
+
+    auto sym_OrtGetApiBase = reinterpret_cast<const OrtApiBase* (*)()>(dlsym(ort_handle, "OrtGetApiBase"));
+    if (!sym_OrtGetApiBase) {
+      std::cerr << "[OCR] FATAL: dlsym OrtGetApiBase failed\n";
+      throw std::runtime_error("dlsym OrtGetApiBase failed");
+    }
+
+    const OrtApiBase* api_base = sym_OrtGetApiBase();
+    if (!api_base) {
+      std::cerr << "[OCR] OrtGetApiBase() returned NULL!\n";
+      throw std::runtime_error("OrtGetApiBase() failed");
+    }
+
+    const OrtApi* api = api_base->GetApi(ORT_API_VERSION);
+    if (!api) {
+      std::cerr << "[OCR] GetApi(ORT_API_VERSION=" << ORT_API_VERSION << ") returned NULL!\n";
+      throw std::runtime_error("GetApi() failed");
+    }
+
+    Ort::InitApi(api); // Force C++ wrappers to use our explicitly loaded DLL's API base
+
+    std::cerr << "[OCR] OrtApi located successfully. Creating Env...\n";
+    
+    // Now create them safely via native C++ wrappers
+    env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "tizenclaw-ocr");
+    
+    opts = Ort::SessionOptions();
     opts.SetIntraOpNumThreads(2);
     opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+
+    alloc = Ort::AllocatorWithDefaultOptions();
+
+    std::cerr << "[OCR] Initializing Sessions...\n";
     det_session = Ort::Session(env, (model_dir + "/det.onnx").c_str(), opts);
     rec_session = Ort::Session(env, (model_dir + "/rec.onnx").c_str(), opts);
     dict = LoadDict(model_dir + "/ppocr_keys.txt");
+    mem_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+
+    std::cerr << "[OCR] Engine initialization completed.\n";
   }
 };
 
 extern "C" void* tizenclaw_ocr_create(const char* model_dir) {
-  try { return new OcrEngine(model_dir); } catch (...) { return nullptr; }
+  try {
+    std::cerr << "[OCR] tizenclaw_ocr_create begin\n";
+    return new OcrEngine(model_dir);
+  } catch (const std::exception& e) {
+    std::cerr << "[OCR] Exception in tizenclaw_ocr_create: " << e.what() << "\n";
+    return nullptr;
+  } catch (...) {
+    std::cerr << "[OCR] Unknown Exception in tizenclaw_ocr_create\n";
+    return nullptr;
+  }
 }
 
 extern "C" void tizenclaw_ocr_destroy(void* handle) {
