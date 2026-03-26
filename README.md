@@ -1,5 +1,9 @@
 # tizenclaw-assets
 
+> [!WARNING]
+> **DO NOT USE THIS PROJECT AT THE MOMENT.**
+> The current project has known issues and is undergoing maintenance. Please refrain from using it until this warning is removed.
+
 Consolidated ML/AI asset package for TizenClaw.
 
 ## Contents
